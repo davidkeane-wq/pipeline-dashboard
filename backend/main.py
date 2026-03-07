@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.staticfiles import StaticFiles
 from routers.pipelines import router as pipelines_router
 
 app = FastAPI(title="Pipeline Dashboard API")
@@ -18,3 +18,5 @@ app.include_router(pipelines_router)
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+app.mount("/", StaticFiles(directory="../frontend", html=True), name="frontend")
