@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pipeline Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: #f0f6fc;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .search-bar input {
+      flex: 1;
+      min-width: 140px;
+      padding: 0.5rem 0.75rem;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #e6edf3;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-bar input:focus { border-color: #388bfd; }
+
+    .search-bar button {
+      padding: 0.5rem 1.25rem;
+      background: #238636;
+      border: 1px solid #2ea043;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .search-bar button:hover { background: #2ea043; }
+    .search-bar button:disabled { background: #1a4429; border-color: #1a4429; cursor: not-allowed; }
+
+    #message {
+      font-size: 0.875rem;
+      color: #8b949e;
+      margin-bottom: 1rem;
+      min-height: 1.25rem;
+    }
+
+    #message.error { color: #f85149; }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      color: #8b949e;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #21262d;
+      transition: background 0.1s;
+    }
+
+    tbody tr:hover { background: #161b22; }
+
+    td {
+      padding: 0.65rem 0.75rem;
+      vertical-align: middle;
+    }
+
+    td a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+
+    td a:hover { text-decoration: underline; }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2em 0.55em;
+      border-radius: 2em;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+
+    .badge-success  { background: #1a4429; color: #3fb950; }
+    .badge-failure  { background: #3d1c1c; color: #f85149; }
+    .badge-cancelled{ background: #2d2d2d; color: #8b949e; }
+    .badge-skipped  { background: #2d2d2d; color: #8b949e; }
+    .badge-in_progress { background: #1c2d3d; color: #388bfd; }
+    .badge-queued   { background: #1c2d3d; color: #388bfd; }
+    .badge-default  { background: #21262d; color: #e6edf3; }
+
+    .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid #30363d;
+      border-top-color: #388bfd;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <h1>Pipeline Dashboard</h1>
+
+  <div class="search-bar">
+    <input id="owner" type="text" placeholder="owner" autocomplete="off" />
+    <input id="repo"  type="text" placeholder="repo"  autocomplete="off" />
+    <button id="fetchBtn" onclick="fetchRuns()">Fetch runs</button>
+    <div class="spinner" id="spinner"></div>
+  </div>
+
+  <div id="message"></div>
+
+  <div class="table-wrap">
+    <table id="runsTable" style="display:none">
+      <thead>
+        <tr>
+          <th>Run name</th>
+          <th>Status</th>
+          <th>Conclusion</th>
+          <th>Branch</th>
+          <th>Event</th>
+          <th>Started</th>
+        </tr>
+      </thead>
+      <tbody id="runsBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:8000";
+
+    function badge(value) {
+      if (!value) return '<span class="badge badge-default">—</span>';
+      const cls = ["success","failure","cancelled","skipped","in_progress","queued"].includes(value)
+        ? `badge-${value}` : "badge-default";
+      return `<span class="badge ${cls}">${value.replace(/_/g, " ")}</span>`;
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return "—";
+      const d = new Date(iso);
+      return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+    }
+
+    async function fetchRuns() {
+      const owner = document.getElementById("owner").value.trim();
+      const repo  = document.getElementById("repo").value.trim();
+      const msg   = document.getElementById("message");
+      const table = document.getElementById("runsTable");
+      const tbody = document.getElementById("runsBody");
+      const btn   = document.getElementById("fetchBtn");
+      const spin  = document.getElementById("spinner");
+
+      if (!owner || !repo) {
+        msg.className = "error";
+        msg.textContent = "Please enter both an owner and a repository name.";
+        return;
+      }
+
+      msg.className = "";
+      msg.textContent = "";
+      table.style.display = "none";
+      tbody.innerHTML = "";
+      btn.disabled = true;
+      spin.style.display = "inline-block";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/pipelines/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+
+        if (data.runs.length === 0) {
+          msg.textContent = `No workflow runs found for ${owner}/${repo}.`;
+          return;
+        }
+
+        msg.textContent = `Showing ${data.runs.length} of ${data.total_count} runs for ${owner}/${repo}.`;
+
+        data.runs.forEach(run => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><a href="${run.html_url}" target="_blank" rel="noopener">${run.name}</a></td>
+            <td>${badge(run.status)}</td>
+            <td>${badge(run.conclusion)}</td>
+            <td><code>${run.branch}</code></td>
+            <td>${run.event}</td>
+            <td>${fmtDate(run.created_at)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        table.style.display = "table";
+      } catch (e) {
+        msg.className = "error";
+        msg.textContent = `Error: ${e.message}`;
+      } finally {
+        btn.disabled = false;
+        spin.style.display = "none";
+      }
+    }
+
+    // Allow pressing Enter from either input
+    ["owner","repo"].forEach(id => {
+      document.getElementById(id).addEventListener("keydown", e => {
+        if (e.key === "Enter") fetchRuns();
+      });
+    });
+  </script>
+</body>
+</html>
