@@ -60,7 +60,7 @@ jobs:
           docker build -t $REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE:latest .
           docker push $REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }}
           docker push $REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE:latest
-          
+
   security-scan:
     name: AI Security Scan
     runs-on: ubuntu-latest
@@ -80,6 +80,3 @@ jobs:
       - uses: actions/checkout@v4
       - name: Deploy
         run: echo "Deployment - TODO"
-```
-
----
