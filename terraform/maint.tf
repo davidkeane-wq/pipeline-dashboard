@@ -48,6 +48,9 @@ resource "google_cloud_run_v2_service" "app" {
     containers {
       image = "${var.region}-docker.pkg.dev/${var.project_id}/pipeline-dashboard/pipeline-dashboard-app:latest"
 
+      ports {
+        container_port = 8080
+      }
       env {
         name  = "GITHUB_TOKEN"
         value = var.github_token
