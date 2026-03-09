@@ -74,7 +74,7 @@ jobs:
                                                                                                                                                                
       - name: Run StackScan                                                                                                                                    
         id: scan
-        uses: davidkeane-wq/stackscan@main                                                                                                            
+        uses: davidkeane-wq/stackscan@master                                                                                                            
         with:                                                                                                                                                
           dashboard_url: ${{ secrets.DASHBOARD_URL }}                                                                                                          
           dashboard_token: ${{ secrets.DASHBOARD_TOKEN }}                                                                                                    
