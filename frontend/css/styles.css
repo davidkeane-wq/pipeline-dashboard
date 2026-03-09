@@ -127,3 +127,59 @@ td a:hover { text-decoration: underline; }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #30363d;
+}
+
+.tab {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  font-size: 0.9rem;
+  color: #8b949e;
+  background: none;
+}
+
+.tab.active {
+  color: #f0f6fc;
+  background: #161b22;
+  border-color: #30363d;
+}
+
+.finding {
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  background: #161b22;
+}
+
+.finding-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+
+.finding-file {
+  font-size: 0.8rem;
+  color: #8b949e;
+  margin-bottom: 0.4rem;
+  font-family: monospace;
+}
+
+.finding-recommendation {
+  font-size: 0.85rem;
+  color: #8b949e;
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid #21262d;
+}

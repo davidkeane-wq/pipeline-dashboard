@@ -78,3 +78,13 @@ resource "google_cloud_run_v2_service_iam_member" "public" {
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+
+resource "google_storage_bucket_iam_member" "scan_results_reader" {
+  bucket = google_storage_bucket.scan_results.name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${data.google_compute_default_service_account.default.email}"
+}
+
+data "google_compute_default_service_account" "default" {
+  project = var.project_id
+}

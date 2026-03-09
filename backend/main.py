@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from routers.pipelines import router as pipelines_router
+from routers.pipelines import router as pipelines_router 
+from routers.scans import router as scans_router
 
 app = FastAPI(title="Pipeline Dashboard API")
 
@@ -13,6 +14,7 @@ app.add_middleware(
 )
 
 app.include_router(pipelines_router)
+app.include_router(scans_router)
 
 
 @app.get("/health")
