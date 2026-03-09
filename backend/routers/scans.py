@@ -17,10 +17,6 @@ def get_scan_report(sha: str) -> dict:
 
     return json.loads(blob.download_as_text())
 
-@router.get("/api/scans/{sha}")
-async def get_scan(sha: str):
-    return get_scan_report(sha)
-
 @router.get("/api/scans/latest")
 async def get_latest_scan():
     client = storage.Client()
@@ -34,3 +30,7 @@ async def get_latest_scan():
         raise HTTPException(status_code=404, detail="No scan reports found")
 
     return json.loads(blobs[0].download_as_text())
+
+@router.get("/api/scans/{sha}")
+async def get_scan(sha: str):
+    return get_scan_report(sha)
