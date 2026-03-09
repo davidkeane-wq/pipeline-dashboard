@@ -51,6 +51,11 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
+      - name: Debug auth
+        run: |
+          gcloud auth list
+          gcloud config get project
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
